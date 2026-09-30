@@ -10,6 +10,7 @@ export const dataApi = {
 
 export const windowApi = {
   minimize: () => api.window?.minimize(),
+  close: () => api.window?.close(),
   setAlwaysOnTop: (value) => api.window?.toggleAlwaysOnTop(value),
   isAlwaysOnTop: () => api.window?.isAlwaysOnTop(),
   toggleMini: (mini) => api.window?.toggleMini(mini)

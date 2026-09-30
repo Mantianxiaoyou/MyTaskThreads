@@ -16,10 +16,11 @@ function createWindow () {
   mainWindow = new BrowserWindow({
     width: 900,
     height: 650,
-    minWidth: 800,
-    minHeight: 600,
+    minWidth: 720,
+    minHeight: 480,
     show: false,
-    frame: true,
+    frame: false,
+    titleBarStyle: 'hidden',
     title: '工作进度提醒',
     backgroundColor: '#ffffff',
     webPreferences: {
@@ -38,7 +39,7 @@ function createWindow () {
   // 加载渲染进程：开发环境连 Vite dev server，生产环境加载打包文件
   if (isDev) {
     mainWindow.loadURL('http://localhost:5173')
-    mainWindow.webContents.openDevTools({ mode: 'detach' })
+    // 不自动打开 DevTools；需要时按 F12 或 Ctrl+Shift+I 手动打开
   } else {
     mainWindow.loadFile(path.join(__dirname, '..', 'dist', 'index.html'))
   }

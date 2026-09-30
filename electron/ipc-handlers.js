@@ -87,6 +87,11 @@ function registerIpcHandlers () {
     win?.minimize()
   })
 
+  ipcMain.handle('window:close', (e) => {
+    const win = BrowserWindow.fromWebContents(e.sender)
+    win?.close()
+  })
+
   ipcMain.handle('window:set-always-on-top', (e, value) => {
     const win = BrowserWindow.fromWebContents(e.sender)
     win?.setAlwaysOnTop(!!value)
@@ -108,13 +113,13 @@ function registerIpcHandlers () {
       win._normalBounds = win.getBounds()
       win.setAlwaysOnTop(true)
       win.setSkipTaskbar(true)
-      win.setMinimumSize(280, 360)
-      win.setBounds({ x: 120, y: 120, width: 320, height: 460 })
+      win.setMinimumSize(200, 240)
+      win.setBounds({ x: 120, y: 120, width: 260, height: 360 })
       win._miniMode = true
     } else {
       win.setAlwaysOnTop(false)
       win.setSkipTaskbar(false)
-      win.setMinimumSize(800, 600)
+      win.setMinimumSize(720, 480)
       if (win._normalBounds) {
         win.setBounds(win._normalBounds)
       } else {

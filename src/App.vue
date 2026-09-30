@@ -1,6 +1,7 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue'
 import Sidebar from './components/Sidebar.vue'
+import TitleBar from './components/TitleBar.vue'
 import MiniView from './views/MiniView.vue'
 import { useSettingsStore } from './stores/settingsStore'
 
@@ -43,21 +44,30 @@ onMounted(async () => {
 <template>
   <MiniView v-if="isMini" />
   <div v-else class="app-layout">
-    <Sidebar />
-    <main class="app-main">
-      <RouterView v-slot="{ Component }">
-        <KeepAlive>
-          <component :is="Component" />
-        </KeepAlive>
-      </RouterView>
-    </main>
+    <TitleBar />
+    <div class="app-body">
+      <Sidebar />
+      <main class="app-main">
+        <RouterView v-slot="{ Component }">
+          <KeepAlive>
+            <component :is="Component" />
+          </KeepAlive>
+        </RouterView>
+      </main>
+    </div>
   </div>
 </template>
 
 <style scoped>
 .app-layout {
   display: flex;
+  flex-direction: column;
   height: 100vh;
+  overflow: hidden;
+}
+.app-body {
+  flex: 1;
+  display: flex;
   overflow: hidden;
 }
 .app-main {

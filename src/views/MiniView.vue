@@ -1,5 +1,6 @@
 <script setup>
 import { computed, onMounted, ref } from 'vue'
+import TitleBar from '../components/TitleBar.vue'
 import { useTaskStore } from '../stores/taskStore'
 import { useTimerStore } from '../stores/timerStore'
 import { useSettingsStore } from '../stores/settingsStore'
@@ -62,18 +63,17 @@ async function resumeTimer () {
 
 <template>
   <div class="mini-view">
-    <header class="mini-header">
-      <div class="header-info">
-        <div class="date">{{ new Date().toLocaleDateString('zh-CN', { month: 'long', day: 'numeric', weekday: 'short' }) }}</div>
-        <div class="progress-line">
-          <span class="count">{{ completed }}/{{ total }}</span>
-          <div class="bar">
-            <div class="fill" :style="{ width: completionRate + '%' }"></div>
-          </div>
+    <TitleBar :mini="true" />
+
+    <div class="mini-summary">
+      <div class="date">{{ new Date().toLocaleDateString('zh-CN', { month: 'long', day: 'numeric', weekday: 'short' }) }}</div>
+      <div class="progress-line">
+        <span class="count">{{ completed }}/{{ total }}</span>
+        <div class="bar">
+          <div class="fill" :style="{ width: completionRate + '%' }"></div>
         </div>
       </div>
-      <button class="exit-btn ghost" title="退出小窗" @click="exitMini">⤢</button>
-    </header>
+    </div>
 
     <div class="tab-bar">
       <button :class="{ active: activeTab === 'tasks' }" @click="activeTab = 'tasks'">任务</button>
@@ -151,21 +151,14 @@ async function resumeTimer () {
   height: 100vh;
   background: var(--bg-elevated);
   color: var(--fg);
-  padding: 10px;
-  gap: 8px;
+  padding: 8px;
+  gap: 6px;
   font-size: 11px;
+  overflow: hidden;
 }
 
-.mini-header {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding-bottom: 8px;
-  border-bottom: 1px solid var(--border);
-}
-.header-info {
-  flex: 1;
-  min-width: 0;
+.mini-summary {
+  padding: 4px 4px 6px;
 }
 .date {
   font-size: 10px;
@@ -194,10 +187,6 @@ async function resumeTimer () {
   height: 100%;
   background: var(--primary);
   transition: width var(--duration) var(--ease);
-}
-.exit-btn {
-  font-size: 14px;
-  padding: 4px;
 }
 
 .tab-bar {

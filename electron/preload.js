@@ -13,6 +13,7 @@ contextBridge.exposeInMainWorld('api', {
   // 窗口控制
   window: {
     minimize: () => ipcRenderer.invoke('window:minimize'),
+    close: () => ipcRenderer.invoke('window:close'),
     toggleAlwaysOnTop: (value) => ipcRenderer.invoke('window:set-always-on-top', value),
     isAlwaysOnTop: () => ipcRenderer.invoke('window:is-always-on-top'),
     toggleMini: (mini) => ipcRenderer.invoke('window:toggle-mini', mini),

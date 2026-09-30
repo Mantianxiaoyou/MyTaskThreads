@@ -45,15 +45,15 @@ function createTray (mainWindow) {
           mainWindow._normalBounds = mainWindow.getBounds()
           mainWindow.setAlwaysOnTop(true)
           mainWindow.setSkipTaskbar(true)
-          mainWindow.setMinimumSize(280, 360)
-          mainWindow.setBounds({ x: 120, y: 120, width: 320, height: 460 })
+          mainWindow.setMinimumSize(200, 240)
+          mainWindow.setBounds({ x: 120, y: 120, width: 260, height: 360 })
           mainWindow._miniMode = true
           // 通知渲染进程切换视图
           mainWindow.webContents.send('mini-mode-change', { mini: true })
         } else {
           mainWindow.setAlwaysOnTop(false)
           mainWindow.setSkipTaskbar(false)
-          mainWindow.setMinimumSize(800, 600)
+          mainWindow.setMinimumSize(720, 480)
           if (mainWindow._normalBounds) {
             mainWindow.setBounds(mainWindow._normalBounds)
           }
