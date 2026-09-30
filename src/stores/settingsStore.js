@@ -17,7 +17,7 @@ const DEFAULT_SETTINGS = {
   // 窗口背景自定义（主窗口与 mini 小窗共用）
   bgOpacity: 100,        // 背景不透明度 0-100，100 = 完全不透明
   bgBrightness: 50,      // 背景明暗 50 = 跟随主题，<50 更暗，>50 更亮
-  bgImage: '',           // 背景图片的本地路径，空 = 不用图片
+  bgImage: 'builtin:wallpaper', // 背景图片：builtin:wallpaper = 内置图，绝对路径 = 自己的图，空 = 纯色
   bgImageFit: 'cover',   // 图片填充：cover 铺满 / contain 完整显示 / repeat 平铺
   bgImageVeil: 40        // 图片上的主题色遮罩强度 0-100，越大文字越清晰
 }

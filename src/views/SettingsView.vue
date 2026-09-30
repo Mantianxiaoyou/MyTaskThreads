@@ -38,13 +38,18 @@ const brightnessLabel = computed(() => {
   return (b < 50 ? '更暗 ' : '更亮 ') + Math.abs(b - 50) * 2 + '%'
 })
 
+const BUILTIN_BG = 'builtin:wallpaper'
+
 const DEFAULT_BG = {
   bgOpacity: 100,
   bgBrightness: 50,
-  bgImage: '',
+  bgImage: BUILTIN_BG,
   bgImageFit: 'cover',
   bgImageVeil: 40
 }
+
+// 当前用的是不是内置背景图
+const usingBuiltin = computed(() => settingsStore.settings.bgImage === BUILTIN_BG)
 
 // 拖动滑块时只改内存值（实时预览），松手（change）才写入磁盘
 function previewBg (patch) {
@@ -61,6 +66,11 @@ async function pickImage () {
   const filePath = await dataApi.pickImage()
   if (!filePath) return
   await settingsStore.setBackgroundImage(filePath)
+}
+
+// 换回内置背景图
+async function useBuiltinImage () {
+  await settingsStore.setBackgroundImage(BUILTIN_BG)
 }
 
 async function clearImage () {
@@ -192,15 +202,16 @@ async function importData () {
         <div class="slider-row">
           <label class="slider-label">背景图片</label>
           <button class="pick-image" @click="pickImage">
-            {{ settingsStore.settings.bgImage ? '更换图片…' : '选择图片…' }}
+            {{ usingBuiltin ? '换成自己的图片…' : '更换图片…' }}
           </button>
+          <button v-if="!usingBuiltin" class="use-builtin" @click="useBuiltinImage">用内置背景</button>
           <button v-if="settingsStore.settings.bgImage" class="clear-image" @click="clearImage">清除</button>
         </div>
         <div
           v-if="settingsStore.settings.bgImage"
           class="image-path"
-          :title="settingsStore.settings.bgImage"
-        >{{ settingsStore.settings.bgImage }}</div>
+          :title="usingBuiltin ? '内置背景：src/assets/bg/wallpaper.jpg' : settingsStore.settings.bgImage"
+        >{{ usingBuiltin ? '内置背景（src/assets/bg/wallpaper.jpg，可自行替换）' : settingsStore.settings.bgImage }}</div>
         <div v-if="settingsStore.imageError" class="hint warn">{{ settingsStore.imageError }}</div>
 
         <template v-if="settingsStore.imageUrl">
@@ -316,7 +327,8 @@ async function importData () {
   font-size: 11px;
 }
 .pick-image,
-.clear-image {
+.clear-image,
+.use-builtin {
   font-size: 11px;
 }
 .image-path {

@@ -17,6 +17,11 @@ const IMAGE_MIME = {
 }
 const IMAGE_MAX_BYTES = 20 * 1024 * 1024
 
+// 内置背景图：随应用一起打包，用户可以随时换成自己的图片
+const BUILTIN_IMAGES = {
+  'builtin:wallpaper': path.join(__dirname, '..', 'src', 'assets', 'bg', 'wallpaper.jpg')
+}
+
 let timerState = {
   running: false,
   paused: false,
@@ -112,15 +117,17 @@ function registerIpcHandlers () {
   ipcMain.handle('data:read-image', async (_e, filePath) => {
     try {
       if (!filePath || typeof filePath !== 'string') return { ok: false, message: '图片路径无效' }
-      const ext = path.extname(filePath).toLowerCase()
+      // builtin:xxx 指向随应用打包的内置图；其余按用户选择的绝对路径处理
+      const target = BUILTIN_IMAGES[filePath] || filePath
+      const ext = path.extname(target).toLowerCase()
       const mime = IMAGE_MIME[ext]
       if (!mime) return { ok: false, message: '不支持的图片格式（支持 png / jpg / webp / gif / bmp / avif）' }
-      const stat = await fs.promises.stat(filePath)
+      const stat = await fs.promises.stat(target)
       if (!stat.isFile()) return { ok: false, message: '选中的不是文件' }
       if (stat.size > IMAGE_MAX_BYTES) {
         return { ok: false, message: `图片过大（${(stat.size / 1048576).toFixed(1)}MB），请换一张小于 20MB 的图片` }
       }
-      const buffer = await fs.promises.readFile(filePath)
+      const buffer = await fs.promises.readFile(target)
       return {
         ok: true,
         dataUrl: `data:${mime};base64,${buffer.toString('base64')}`,
