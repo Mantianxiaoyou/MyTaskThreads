@@ -9,8 +9,8 @@ const { loadData } = require('./data.service')
 let mainWindow = null
 let tray = null
 
-// 是否开发环境：未打包即为开发模式
-const isDev = !app.isPackaged
+// 是否开发环境：通过环境变量 DEV=1 显式开启，否则加载本地 dist
+const isDev = process.env.DEV === '1' || process.argv.some(a => a.includes('--dev'))
 
 function createWindow () {
   mainWindow = new BrowserWindow({

@@ -6,7 +6,7 @@
   "author": "you",
   "license": "MIT",
   "scripts": {
-    "dev": "concurrently -k \"vite\" \"wait-on tcp:5173 && electron .\"",
+    "dev": "concurrently -k \"vite\" \"wait-on tcp:5173 && cross-env DEV=1 electron .\"",
     "dev:vite": "vite",
     "dev:electron": "electron .",
     "build": "vite build && electron-builder",
