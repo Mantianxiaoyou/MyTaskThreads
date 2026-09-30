@@ -2,8 +2,9 @@
 
 # 面向社畜的多线程管理器
 
-**把便利贴长在屏幕上——记下今天要做的事，到点提醒你，忙起来也不会漏。**
+**MyTaskThreads** — 把便利贴长在屏幕上：记下今天要做的事，到点提醒你，忙起来也不会漏。
 
+[![Build](https://github.com/Mantianxiaoyou/MyTaskThreads/actions/workflows/build.yml/badge.svg)](https://github.com/Mantianxiaoyou/MyTaskThreads/actions/workflows/build.yml)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Electron](https://img.shields.io/badge/Electron-28-47848F?logo=electron&logoColor=white)](https://www.electronjs.org/)
 [![Vue](https://img.shields.io/badge/Vue-3-42B883?logo=vuedotjs&logoColor=white)](https://vuejs.org/)
@@ -63,6 +64,8 @@
 ### 安装与开发
 
 ```bash
+git clone https://github.com/Mantianxiaoyou/MyTaskThreads.git
+cd MyTaskThreads
 npm install
 npm run dev      # 启动 Vite 开发服务器，并自动打开 Electron 窗口
 ```
