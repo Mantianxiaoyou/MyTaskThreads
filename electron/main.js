@@ -9,8 +9,8 @@ const { loadData } = require('./data.service')
 let mainWindow = null
 let tray = null
 
-// 是否开发环境
-const isDev = !app.isPackaged && process.argv.some(a => a.includes('vite') || a.includes('electron .'))
+// 是否开发环境：未打包即为开发模式
+const isDev = !app.isPackaged
 
 function createWindow () {
   mainWindow = new BrowserWindow({
@@ -45,6 +45,8 @@ function createWindow () {
 
   // 默认非置顶；后续会被设置覆盖
   mainWindow.setAlwaysOnTop(false)
+  // 标记当前是否 mini 模式
+  mainWindow._miniMode = false
 
   // 关闭时清理引用
   mainWindow.on('closed', () => {

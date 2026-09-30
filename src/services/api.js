@@ -11,7 +11,8 @@ export const dataApi = {
 export const windowApi = {
   minimize: () => api.window?.minimize(),
   setAlwaysOnTop: (value) => api.window?.toggleAlwaysOnTop(value),
-  isAlwaysOnTop: () => api.window?.isAlwaysOnTop()
+  isAlwaysOnTop: () => api.window?.isAlwaysOnTop(),
+  toggleMini: (mini) => api.window?.toggleMini(mini)
 }
 
 export const notificationApi = {

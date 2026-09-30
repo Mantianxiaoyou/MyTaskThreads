@@ -9,144 +9,281 @@ const emit = defineEmits(['edit', 'delete', 'toggle-status', 'set-progress', 'st
 
 const priorityLabel = computed(() => ({ high: '高', medium: '中', low: '低' }[props.task.priority] || '中'))
 const overdue = computed(() => props.task.status !== 'completed' && isOverdue(props.task.dueTime))
+const completed = computed(() => props.task.status === 'completed')
+const progress = computed(() => Math.max(0, Math.min(100, props.task.progress || 0)))
 
 function onProgress (e) {
   emit('set-progress', props.task.id, Number(e.target.value))
 }
 function toggleComplete () {
-  emit('toggle-status', props.task.id, props.task.status === 'completed' ? 'pending' : 'completed')
+  emit('toggle-status', props.task.id, completed.value ? 'pending' : 'completed')
 }
 </script>
 
 <template>
-  <div class="task-card" :class="[`status-${task.status}`, { overdue }]">
-    <div class="header">
-      <input
-        type="checkbox"
-        :checked="task.status === 'completed'"
-        @change="toggleComplete"
-      />
-      <div class="title-area">
-        <div class="title">{{ task.title }}</div>
-        <div class="meta">
-          <span class="cat" v-if="task.category">{{ task.category }}</span>
-          <span class="priority" :class="`p-${task.priority}`">{{ priorityLabel }}</span>
-          <span v-if="task.dueTime" class="due">截止 {{ isoToLocal(task.dueTime) }}</span>
-          <span v-if="task.pomodoroCount > 0" class="pomo">🍅 × {{ task.pomodoroCount }}</span>
+  <div
+    class="task-card"
+    :class="[`status-${task.status}`, `p-${task.priority}`, { overdue, completed }]"
+  >
+    <div class="left-line"></div>
+    <div class="card-body">
+      <div class="header">
+        <label class="check-wrap" :title="completed ? '标记未完成' : '标记完成'">
+          <input
+            type="checkbox"
+            :checked="completed"
+            @change="toggleComplete"
+          />
+          <span class="checkbox-fake"></span>
+        </label>
+
+        <div class="title-area">
+          <div class="title" :title="task.title">{{ task.title }}</div>
+          <div class="meta">
+            <span class="cat" v-if="task.category">{{ task.category }}</span>
+            <span class="priority" :class="`p-${task.priority}`">{{ priorityLabel }}</span>
+            <span v-if="task.dueTime" class="due" :class="{ overdue }">
+              {{ overdue ? '已超期 ' : '截止 ' }}{{ isoToLocal(task.dueTime) }}
+            </span>
+            <span v-if="task.pomodoroCount > 0" class="pomo">🍅 {{ task.pomodoroCount }}</span>
+          </div>
+        </div>
+
+        <div class="actions">
+          <button class="icon-btn ghost" title="开始番茄钟" @click="emit('start-pomodoro', task.id)">⏱</button>
+          <button class="icon-btn ghost" title="编辑" @click="emit('edit', task.id)">✎</button>
+          <button class="icon-btn ghost danger" title="删除" @click="emit('delete', task.id)">×</button>
         </div>
       </div>
-      <div class="actions">
-        <button class="icon-btn" title="开始番茄钟" @click="emit('start-pomodoro', task.id)">⏱</button>
-        <button class="icon-btn" title="编辑" @click="emit('edit', task.id)">✎</button>
-        <button class="icon-btn danger" title="删除" @click="emit('delete', task.id)">🗑</button>
+
+      <!-- 进度条 + 滑块 -->
+      <div class="progress-row" v-if="!completed">
+        <div class="progress-track">
+          <div class="progress-fill" :style="{ width: progress + '%' }"></div>
+        </div>
+        <input
+          type="range"
+          min="0"
+          max="100"
+          step="5"
+          :value="progress"
+          class="range-input"
+          @input="onProgress"
+        />
+        <span class="progress-text mono">{{ progress }}%</span>
       </div>
-    </div>
-    <div v-if="task.tags && task.tags.length" class="tags">
-      <span v-for="t in task.tags" :key="t" class="tag">{{ t }}</span>
-    </div>
-    <div class="progress-row">
-      <input
-        type="range"
-        min="0"
-        max="100"
-        :value="task.progress"
-        @input="onProgress"
-        class="progress-bar"
-      />
-      <span class="progress-text">{{ task.progress }}%</span>
     </div>
   </div>
 </template>
 
 <style scoped>
 .task-card {
-  background: var(--bg-soft);
+  display: flex;
+  background: var(--bg-elevated);
   border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 10px 12px;
-  margin-bottom: 8px;
-  transition: all 0.15s;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  transition: all var(--duration) var(--ease);
+  position: relative;
 }
-.task-card.status-completed {
-  opacity: 0.6;
+.task-card:hover {
+  border-color: var(--border-strong);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-1px);
 }
+.task-card.completed {
+  opacity: 0.65;
+}
+.left-line {
+  width: 3px;
+  background: var(--border);
+  transition: background var(--duration) var(--ease);
+}
+.task-card.p-high .left-line { background: var(--high); }
+.task-card.p-medium .left-line { background: var(--medium); }
+.task-card.p-low .left-line { background: var(--low); }
+.task-card.completed .left-line { background: var(--success); }
 .task-card.overdue {
   border-color: var(--danger);
+  box-shadow: 0 0 0 1px var(--danger);
 }
+.task-card.overdue .left-line {
+  background: var(--danger);
+  animation: blink 1.6s var(--ease) infinite;
+}
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+.card-body {
+  flex: 1;
+  padding: 10px 12px;
+  min-width: 0;
+}
+
 .header {
   display: flex;
   align-items: flex-start;
   gap: 8px;
 }
+
+/* 复选框 */
+.check-wrap {
+  display: inline-flex;
+  align-items: center;
+  cursor: pointer;
+  margin-top: 1px;
+}
+.check-wrap input {
+  display: none;
+}
+.checkbox-fake {
+  width: 16px;
+  height: 16px;
+  border: 1.5px solid var(--border-strong);
+  border-radius: 4px;
+  display: inline-block;
+  position: relative;
+  transition: all var(--duration-fast) var(--ease);
+}
+.check-wrap:hover .checkbox-fake {
+  border-color: var(--primary);
+}
+.check-wrap input:checked + .checkbox-fake {
+  background: var(--primary);
+  border-color: var(--primary);
+}
+.check-wrap input:checked + .checkbox-fake::after {
+  content: '✓';
+  color: #fff;
+  font-size: 11px;
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+}
+
 .title-area {
   flex: 1;
+  min-width: 0;
 }
 .title {
+  font-size: 13px;
   font-weight: 500;
-  font-size: 14px;
+  color: var(--fg);
+  margin-bottom: 4px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
-.status-completed .title {
+.task-card.completed .title {
   text-decoration: line-through;
+  color: var(--fg-soft);
 }
 .meta {
-  margin-top: 4px;
-  font-size: 11px;
-  color: var(--fg-soft);
   display: flex;
   gap: 8px;
+  font-size: 10px;
+  color: var(--fg-mute);
   flex-wrap: wrap;
 }
-.cat {
-  color: var(--primary);
-}
-.priority {
+.cat, .priority, .due, .pomo {
   padding: 1px 6px;
-  border-radius: 8px;
-  font-size: 10px;
+  background: var(--bg-strong);
+  border-radius: 3px;
 }
-.p-high { background: rgba(255, 69, 58, 0.15); color: var(--high); }
-.p-medium { background: rgba(255, 159, 10, 0.15); color: var(--medium); }
-.p-low { background: rgba(52, 199, 89, 0.15); color: var(--low); }
-.due {
-  color: var(--fg-soft);
-}
-.overdue .due {
+.priority.p-high { background: rgba(185, 28, 28, 0.1); color: var(--high); }
+.priority.p-medium { background: rgba(194, 65, 12, 0.1); color: var(--medium); }
+.priority.p-low { background: rgba(21, 128, 61, 0.1); color: var(--low); }
+.due.overdue {
+  background: rgba(185, 28, 28, 0.1);
   color: var(--danger);
+  font-weight: 500;
 }
+
 .actions {
   display: flex;
-  gap: 4px;
+  gap: 2px;
+  opacity: 0;
+  transition: opacity var(--duration-fast) var(--ease);
+}
+.task-card:hover .actions {
+  opacity: 1;
 }
 .icon-btn {
   background: transparent;
   border: none;
   padding: 4px 6px;
-  font-size: 14px;
+  font-size: 13px;
   color: var(--fg-soft);
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
+  transition: all var(--duration-fast) var(--ease);
 }
 .icon-btn:hover {
   background: var(--bg-strong);
+  color: var(--fg);
 }
 .icon-btn.danger:hover {
   color: var(--danger);
+  background: rgba(185, 28, 28, 0.1);
 }
-.tags {
-  margin-top: 6px;
-}
+
+/* 进度条 */
 .progress-row {
-  margin-top: 8px;
   display: flex;
   align-items: center;
   gap: 8px;
+  margin-top: 8px;
+  padding-left: 24px;
 }
-.progress-bar {
+.progress-track {
   flex: 1;
+  height: 4px;
+  background: var(--bg-strong);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.progress-fill {
+  height: 100%;
+  background: var(--primary);
+  transition: width var(--duration) var(--ease);
+  border-radius: 2px;
+}
+.range-input {
+  width: 80px;
+  margin: 0;
+  padding: 0;
+  height: 14px;
+  background: transparent;
+  border: none;
+}
+.range-input::-webkit-slider-runnable-track {
+  height: 4px;
+  background: var(--bg-strong);
+  border-radius: 2px;
+}
+.range-input::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--primary);
+  margin-top: -4px;
+  cursor: pointer;
+  border: 2px solid var(--bg-elevated);
+  box-shadow: var(--shadow-sm);
 }
 .progress-text {
-  font-size: 11px;
+  font-size: 10px;
   color: var(--fg-soft);
-  min-width: 32px;
+  min-width: 28px;
   text-align: right;
+}
+.mono {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
 }
 </style>

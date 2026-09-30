@@ -14,7 +14,13 @@ contextBridge.exposeInMainWorld('api', {
   window: {
     minimize: () => ipcRenderer.invoke('window:minimize'),
     toggleAlwaysOnTop: (value) => ipcRenderer.invoke('window:set-always-on-top', value),
-    isAlwaysOnTop: () => ipcRenderer.invoke('window:is-always-on-top')
+    isAlwaysOnTop: () => ipcRenderer.invoke('window:is-always-on-top'),
+    toggleMini: (mini) => ipcRenderer.invoke('window:toggle-mini', mini),
+    onMiniModeChange: (cb) => {
+      const handler = (_e, detail) => cb(detail)
+      ipcRenderer.on('mini-mode-change', handler)
+      return () => ipcRenderer.removeListener('mini-mode-change', handler)
+    }
   },
   // 通知
   notification: {

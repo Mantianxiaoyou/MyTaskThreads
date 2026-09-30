@@ -81,8 +81,10 @@ function loadData () {
   }
 }
 
+// 保存数据
 function saveData (data) {
   const merged = mergeWithDefaults(data)
+  console.log('[data.service] saveData: tasks=', merged.tasks.length, 'sessions=', merged.pomodoroSessions.length, '->', getDataPath())
   atomicWrite(getDataPath(), JSON.stringify(merged, null, 2))
   return merged
 }

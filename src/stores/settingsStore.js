@@ -38,7 +38,8 @@ export const useSettingsStore = defineStore('settings', {
     async update (patch) {
       this.settings = { ...this.settings, ...patch }
       const full = await dataApi.load()
-      full.settings = { ...this.settings }
+      // 用 JSON 序列化确保是纯对象（避免 Pinia reactive Proxy 在 IPC 时丢失）
+      full.settings = JSON.parse(JSON.stringify(this.settings))
       await dataApi.save(full)
       if ('theme' in patch) {
         await systemApi.setTheme(patch.theme)

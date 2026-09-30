@@ -61,10 +61,12 @@ export const useTaskStore = defineStore('tasks', {
       this.loaded = true
     },
     async persist () {
+      // 从磁盘加载最新数据，仅覆盖 tasks/categories/tags 字段
+      // 用 JSON 序列化确保是纯对象（Pinia reactive Proxy 在 IPC 时可能丢失数据）
       const data = await dataApi.load()
-      data.tasks = this.tasks
-      data.categories = this.categories
-      data.tags = this.tags
+      data.tasks = JSON.parse(JSON.stringify(this.tasks))
+      data.categories = JSON.parse(JSON.stringify(this.categories))
+      data.tags = JSON.parse(JSON.stringify(this.tags))
       await dataApi.save(data)
     },
     async create (partial) {

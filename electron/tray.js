@@ -36,6 +36,32 @@ function createTray (mainWindow) {
         }
       }
     },
+    {
+      label: '切换 mini 小窗',
+      click: () => {
+        if (!mainWindow) return
+        const target = !mainWindow._miniMode
+        if (target) {
+          mainWindow._normalBounds = mainWindow.getBounds()
+          mainWindow.setAlwaysOnTop(true)
+          mainWindow.setSkipTaskbar(true)
+          mainWindow.setMinimumSize(280, 360)
+          mainWindow.setBounds({ x: 120, y: 120, width: 320, height: 460 })
+          mainWindow._miniMode = true
+          // 通知渲染进程切换视图
+          mainWindow.webContents.send('mini-mode-change', { mini: true })
+        } else {
+          mainWindow.setAlwaysOnTop(false)
+          mainWindow.setSkipTaskbar(false)
+          mainWindow.setMinimumSize(800, 600)
+          if (mainWindow._normalBounds) {
+            mainWindow.setBounds(mainWindow._normalBounds)
+          }
+          mainWindow._miniMode = false
+          mainWindow.webContents.send('mini-mode-change', { mini: false })
+        }
+      }
+    },
     { type: 'separator' },
     {
       label: '退出',

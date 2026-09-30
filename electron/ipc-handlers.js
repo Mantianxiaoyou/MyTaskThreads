@@ -98,6 +98,33 @@ function registerIpcHandlers () {
     return win?.isAlwaysOnTop() || false
   })
 
+  // mini 模式切换：缩小窗口 + 自动置顶
+  ipcMain.handle('window:toggle-mini', (e, mini) => {
+    const win = BrowserWindow.fromWebContents(e.sender)
+    if (!win) return false
+    const target = typeof mini === 'boolean' ? mini : !win._miniMode
+    if (target) {
+      // 进入 mini 模式前保存当前 bounds
+      win._normalBounds = win.getBounds()
+      win.setAlwaysOnTop(true)
+      win.setSkipTaskbar(true)
+      win.setMinimumSize(280, 360)
+      win.setBounds({ x: 120, y: 120, width: 320, height: 460 })
+      win._miniMode = true
+    } else {
+      win.setAlwaysOnTop(false)
+      win.setSkipTaskbar(false)
+      win.setMinimumSize(800, 600)
+      if (win._normalBounds) {
+        win.setBounds(win._normalBounds)
+      } else {
+        win.setBounds({ width: 900, height: 650 })
+      }
+      win._miniMode = false
+    }
+    return target
+  })
+
   // ─── 通知 ───
   ipcMain.handle('notification:show', (_e, { title, body }) => {
     if (!Notification.isSupported()) return false
