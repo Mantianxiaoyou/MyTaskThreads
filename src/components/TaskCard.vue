@@ -85,7 +85,16 @@ function toggleComplete () {
           title="按住拖动排序"
           @dragstart="onDragStart"
           @dragend="onDragEnd"
-        >⋮⋮</span>
+        >
+          <svg viewBox="0 0 10 16" width="10" height="16" aria-hidden="true">
+            <circle cx="2.5" cy="3" r="1.7" />
+            <circle cx="7.5" cy="3" r="1.7" />
+            <circle cx="2.5" cy="8" r="1.7" />
+            <circle cx="7.5" cy="8" r="1.7" />
+            <circle cx="2.5" cy="13" r="1.7" />
+            <circle cx="7.5" cy="13" r="1.7" />
+          </svg>
+        </span>
 
         <div class="title-area">
           <div class="title" :title="task.title">{{ task.title }}</div>
@@ -178,26 +187,33 @@ function toggleComplete () {
   gap: 8px;
 }
 
-/* 拖动手柄：只有它能发起拖动，避免和复选框 / 滑块 / 按钮抢事件 */
+/* 拖动手柄：只有它能发起拖动，避免和复选框 / 滑块 / 按钮抢事件。
+   做成带底色的抓手块，默认就能看出这里可以拖。 */
 .grip {
   flex-shrink: 0;
-  padding: 1px 3px;
-  margin-top: 1px;
-  font-size: 11px;
-  line-height: 1;
-  letter-spacing: -1px;
-  color: var(--fg-mute);
-  border-radius: var(--radius-sm);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 28px;
+  border-radius: var(--radius-md);
+  background: var(--bg-strong);
+  color: var(--fg-soft);
   cursor: grab;
   user-select: none;
   transition: all var(--duration-fast) var(--ease);
 }
+.grip svg {
+  fill: currentColor;
+  pointer-events: none;
+}
 .grip:hover {
-  color: var(--fg-soft);
-  background: var(--bg-strong);
+  background: var(--primary-soft);
+  color: var(--primary);
 }
 .grip:active {
   cursor: grabbing;
+  background: var(--primary-mute);
 }
 
 /* 拖动中的卡片与被拖到的那条插入线 */
