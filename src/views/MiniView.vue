@@ -10,7 +10,7 @@ import { formatTime } from '../utils/time'
 const taskStore = useTaskStore()
 const timerStore = useTimerStore()
 const settingsStore = useSettingsStore()
-const { bgStyle } = useBackground('mini') // mini 小窗以 --bg-elevated 为基准色
+const { bgStyle, bgImageStyle } = useBackground('mini') // mini 小窗以 --bg-elevated 为基准色
 
 const activeTab = ref('tasks') // tasks | timer
 
@@ -65,6 +65,7 @@ async function resumeTimer () {
 
 <template>
   <div class="mini-view" :style="bgStyle">
+    <div class="bg-image" :style="bgImageStyle"></div>
     <TitleBar :mini="true" />
 
     <div class="mini-summary">
@@ -158,6 +159,10 @@ async function resumeTimer () {
   gap: 6px;
   font-size: 11px;
   overflow: hidden;
+}
+/* 自定义图片背景层：定位/层叠全部来自内联样式，这里不再定义 */
+.bg-image {
+  pointer-events: none;
 }
 
 .mini-summary {

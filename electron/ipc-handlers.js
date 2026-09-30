@@ -1,7 +1,21 @@
 // IPC 处理器：注册所有主进程 IPC 调用
 const { ipcMain, BrowserWindow, app, Notification, nativeTheme, dialog } = require('electron')
+const fs = require('fs')
+const path = require('path')
 const { loadData, saveData, exportData, importData } = require('./data.service')
 const { refreshSchedule } = require('./notifications')
+
+// 背景图片：允许的格式与体积上限
+const IMAGE_MIME = {
+  '.png': 'image/png',
+  '.jpg': 'image/jpeg',
+  '.jpeg': 'image/jpeg',
+  '.webp': 'image/webp',
+  '.gif': 'image/gif',
+  '.bmp': 'image/bmp',
+  '.avif': 'image/avif'
+}
+const IMAGE_MAX_BYTES = 20 * 1024 * 1024
 
 let timerState = {
   running: false,
@@ -79,6 +93,43 @@ function registerIpcHandlers () {
     })).filePaths[0]
     if (!p) return null
     return importData(p)
+  })
+
+  // ─── 背景图片 ───
+  // 选择图片：只返回路径，由渲染进程决定是否采用
+  ipcMain.handle('data:pick-image', async () => {
+    const result = await dialog.showOpenDialog({
+      title: '选择背景图片',
+      properties: ['openFile'],
+      filters: [{ name: '图片', extensions: ['png', 'jpg', 'jpeg', 'webp', 'gif', 'bmp', 'avif'] }]
+    })
+    if (result.canceled || !result.filePaths?.[0]) return null
+    return result.filePaths[0]
+  })
+
+  // 读取图片为 data URL：渲染进程直接引用本地路径在 http(dev) 下会被拦，
+  // 统一由主进程读成 data URL 传给页面，dev / 打包后行为一致。
+  ipcMain.handle('data:read-image', async (_e, filePath) => {
+    try {
+      if (!filePath || typeof filePath !== 'string') return { ok: false, message: '图片路径无效' }
+      const ext = path.extname(filePath).toLowerCase()
+      const mime = IMAGE_MIME[ext]
+      if (!mime) return { ok: false, message: '不支持的图片格式（支持 png / jpg / webp / gif / bmp / avif）' }
+      const stat = await fs.promises.stat(filePath)
+      if (!stat.isFile()) return { ok: false, message: '选中的不是文件' }
+      if (stat.size > IMAGE_MAX_BYTES) {
+        return { ok: false, message: `图片过大（${(stat.size / 1048576).toFixed(1)}MB），请换一张小于 20MB 的图片` }
+      }
+      const buffer = await fs.promises.readFile(filePath)
+      return {
+        ok: true,
+        dataUrl: `data:${mime};base64,${buffer.toString('base64')}`,
+        name: path.basename(filePath),
+        size: stat.size
+      }
+    } catch (e) {
+      return { ok: false, message: '读取图片失败：' + e.message }
+    }
   })
 
   // ─── 窗口 ───

@@ -15,13 +15,19 @@ const DEFAULT_SETTINGS = {
   theme: 'auto',
   remindBeforeMin: 10,
   // 窗口背景自定义（主窗口与 mini 小窗共用）
-  bgOpacity: 100,      // 背景不透明度 0-100，100 = 完全不透明
-  bgBrightness: 50     // 背景明暗 50 = 跟随主题，<50 更暗，>50 更亮
+  bgOpacity: 100,        // 背景不透明度 0-100，100 = 完全不透明
+  bgBrightness: 50,      // 背景明暗 50 = 跟随主题，<50 更暗，>50 更亮
+  bgImage: '',           // 背景图片的本地路径，空 = 不用图片
+  bgImageFit: 'cover',   // 图片填充：cover 铺满 / contain 完整显示 / repeat 平铺
+  bgImageVeil: 40        // 图片上的主题色遮罩强度 0-100，越大文字越清晰
 }
 
 export const useSettingsStore = defineStore('settings', {
   state: () => ({
     settings: { ...DEFAULT_SETTINGS },
+    // 图片内容只在内存里放 data URL，不写进数据文件（路径才持久化）
+    imageUrl: '',
+    imageError: '',
     loaded: false
   }),
   actions: {
@@ -37,6 +43,41 @@ export const useSettingsStore = defineStore('settings', {
           document.documentElement.setAttribute('data-theme', 'light')
         }
       }
+      await this.loadBackgroundImage()
+    },
+    // 按已保存的路径读取图片内容（启动时、或外部改过路径时调用）
+    async loadBackgroundImage () {
+      if (!this.settings.bgImage) {
+        this.imageUrl = ''
+        this.imageError = ''
+        return
+      }
+      const res = await dataApi.readImage(this.settings.bgImage)
+      if (res?.ok) {
+        this.imageUrl = res.dataUrl
+        this.imageError = ''
+      } else {
+        this.imageUrl = ''
+        this.imageError = res ? (res.message || '背景图片读取失败') : '图片接口未加载（通常是应用没重启），请重启后再试'
+      }
+    },
+    // 选择 / 更换 / 清除背景图片；只有读取成功才把路径存进设置
+    async setBackgroundImage (filePath) {
+      if (!filePath) {
+        this.imageUrl = ''
+        this.imageError = ''
+        await this.update({ bgImage: '' })
+        return true
+      }
+      const res = await dataApi.readImage(filePath)
+      if (!res?.ok) {
+        this.imageError = res ? (res.message || '背景图片读取失败') : '图片接口未加载（通常是应用没重启），请重启后再试'
+        return false
+      }
+      this.imageUrl = res.dataUrl
+      this.imageError = ''
+      await this.update({ bgImage: filePath })
+      return true
     },
     // 预览：只改内存中的值，让滑块拖动时即时生效，不写磁盘
     preview (patch) {

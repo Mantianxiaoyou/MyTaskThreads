@@ -5,7 +5,9 @@ export const dataApi = {
   load: () => api.data?.load(),
   save: (data) => api.data?.save(data),
   exportPath: (p) => api.data?.export(p),
-  importPath: (p) => api.data?.import(p)
+  importPath: (p) => api.data?.import(p),
+  pickImage: () => api.data?.pickImage(),
+  readImage: (p) => api.data?.readImage(p)
 }
 
 export const windowApi = {

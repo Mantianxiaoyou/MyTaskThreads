@@ -2,6 +2,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useSettingsStore } from '../stores/settingsStore'
 import { useBackground } from '../composables/useBackground'
+import { dataApi } from '../services/api'
 
 const settingsStore = useSettingsStore()
 
@@ -15,7 +16,12 @@ const sections = [
 const activeSection = ref('pomodoro')
 
 onMounted(async () => {
-  if (!settingsStore.loaded) await settingsStore.init()
+  if (!settingsStore.loaded) {
+    await settingsStore.init()
+  } else if (settingsStore.settings.bgImage && !settingsStore.imageUrl) {
+    // 上次读取失败（例如接口刚加载完），进设置页时再试一次
+    await settingsStore.loadBackgroundImage()
+  }
 })
 
 async function update (patch) {
@@ -23,7 +29,7 @@ async function update (patch) {
 }
 
 // 背景预览：与窗口实际使用的样式同源（主窗口基准色）
-const { bgStyle: previewBgStyle } = useBackground()
+const { bgStyle: previewBgStyle, bgImageStyle: previewBgImageStyle } = useBackground()
 
 // 明暗滑块的文字说明：显示相对基准色的混合比例
 const brightnessLabel = computed(() => {
@@ -32,14 +38,38 @@ const brightnessLabel = computed(() => {
   return (b < 50 ? '更暗 ' : '更亮 ') + Math.abs(b - 50) * 2 + '%'
 })
 
-const DEFAULT_BG = { bgOpacity: 100, bgBrightness: 50 }
+const DEFAULT_BG = {
+  bgOpacity: 100,
+  bgBrightness: 50,
+  bgImage: '',
+  bgImageFit: 'cover',
+  bgImageVeil: 40
+}
 
 // 拖动滑块时只改内存值（实时预览），松手（change）才写入磁盘
 function previewBg (patch) {
   settingsStore.preview(patch)
 }
 
+// 选图 / 换图：图片读取成功才会写进设置
+async function pickImage () {
+  // 主进程接口缺失时（改了 preload 但没重启 Electron）直接说清楚，别静默无反应
+  if (typeof window.api?.data?.pickImage !== 'function') {
+    alert('图片背景功能需要重启应用后生效：主进程接口还没加载。请关闭并重新运行（npm run dev）。')
+    return
+  }
+  const filePath = await dataApi.pickImage()
+  if (!filePath) return
+  await settingsStore.setBackgroundImage(filePath)
+}
+
+async function clearImage () {
+  await settingsStore.setBackgroundImage('')
+}
+
 async function resetBackground () {
+  settingsStore.imageUrl = ''
+  settingsStore.imageError = ''
   await update({ ...DEFAULT_BG })
 }
 
@@ -158,9 +188,54 @@ async function importData () {
           />
           <span class="slider-value">{{ brightnessLabel }}</span>
         </div>
-        <div class="bg-preview" :style="previewBgStyle"></div>
+
+        <div class="slider-row">
+          <label class="slider-label">背景图片</label>
+          <button class="pick-image" @click="pickImage">
+            {{ settingsStore.settings.bgImage ? '更换图片…' : '选择图片…' }}
+          </button>
+          <button v-if="settingsStore.settings.bgImage" class="clear-image" @click="clearImage">清除</button>
+        </div>
+        <div
+          v-if="settingsStore.settings.bgImage"
+          class="image-path"
+          :title="settingsStore.settings.bgImage"
+        >{{ settingsStore.settings.bgImage }}</div>
+        <div v-if="settingsStore.imageError" class="hint warn">{{ settingsStore.imageError }}</div>
+
+        <template v-if="settingsStore.imageUrl">
+          <div class="slider-row">
+            <label class="slider-label">图片填充</label>
+            <select
+              class="fit-select"
+              :value="settingsStore.settings.bgImageFit"
+              @change="e => update({ bgImageFit: e.target.value })"
+            >
+              <option value="cover">铺满窗口</option>
+              <option value="contain">完整显示</option>
+              <option value="repeat">平铺</option>
+            </select>
+          </div>
+          <div class="slider-row">
+            <label class="slider-label">图片遮罩</label>
+            <input
+              type="range"
+              min="0"
+              max="100"
+              step="1"
+              :value="settingsStore.settings.bgImageVeil"
+              @input="e => previewBg({ bgImageVeil: Number(e.target.value) })"
+              @change="e => update({ bgImageVeil: Number(e.target.value) })"
+            />
+            <span class="slider-value">{{ settingsStore.settings.bgImageVeil }}%</span>
+          </div>
+        </template>
+
+        <div class="bg-preview" :style="previewBgStyle">
+          <div class="bg-preview-image" :style="previewBgImageStyle"></div>
+        </div>
         <div class="hint">
-          窗口背景对主窗口和 mini 小窗同时生效：不透明度越低越能透出桌面，明暗程度调整背景颜色的深浅。
+          窗口背景对主窗口和 mini 小窗同时生效：不透明度越低越能透出桌面，明暗程度调整背景颜色的深浅；图片遮罩越大文字越清晰。
         </div>
         <button class="reset-bg" @click="resetBackground">恢复默认背景</button>
       </div>
@@ -239,6 +314,29 @@ async function importData () {
   align-self: flex-start;
   margin-top: 8px;
   font-size: 11px;
+}
+.pick-image,
+.clear-image {
+  font-size: 11px;
+}
+.image-path {
+  margin: -4px 0 6px 90px;
+  font-size: 10px;
+  color: var(--fg-mute);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.fit-select {
+  flex: 1;
+  max-width: 200px;
+}
+.hint.warn {
+  color: var(--danger);
+}
+/* 定位/层叠来自内联样式，这里只补一个圆角 */
+.bg-preview-image {
+  border-radius: var(--radius-md);
 }
 .bg-preview {
   height: 40px;

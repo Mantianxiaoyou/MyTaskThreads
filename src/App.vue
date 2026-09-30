@@ -8,7 +8,7 @@ import { useBackground } from './composables/useBackground'
 
 const miniMode = ref(false)
 const settingsStore = useSettingsStore()
-const { bgStyle } = useBackground()
+const { bgStyle, bgImageStyle } = useBackground()
 
 const isMini = computed(() => miniMode.value)
 
@@ -46,6 +46,7 @@ onMounted(async () => {
 <template>
   <MiniView v-if="isMini" />
   <div v-else class="app-layout" :style="bgStyle">
+    <div class="bg-image" :style="bgImageStyle"></div>
     <TitleBar />
     <div class="app-body">
       <Sidebar />
@@ -68,6 +69,10 @@ onMounted(async () => {
   overflow: hidden;
   /* 兜底：自定义背景（内联样式）不可用时退回主题背景色 */
   background: var(--bg);
+}
+/* 自定义图片背景层：定位/层叠全部来自内联样式，这里不再定义 */
+.bg-image {
+  pointer-events: none;
 }
 .app-body {
   flex: 1;

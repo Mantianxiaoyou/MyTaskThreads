@@ -8,7 +8,10 @@ contextBridge.exposeInMainWorld('api', {
     load: () => ipcRenderer.invoke('data:load'),
     save: (data) => ipcRenderer.invoke('data:save', data),
     export: (targetPath) => ipcRenderer.invoke('data:export', targetPath),
-    import: (sourcePath) => ipcRenderer.invoke('data:import', sourcePath)
+    import: (sourcePath) => ipcRenderer.invoke('data:import', sourcePath),
+    // 背景图片
+    pickImage: () => ipcRenderer.invoke('data:pick-image'),
+    readImage: (filePath) => ipcRenderer.invoke('data:read-image', filePath)
   },
   // 窗口控制
   window: {
