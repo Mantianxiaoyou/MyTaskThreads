@@ -47,6 +47,11 @@ async function toggleMini () {
   window.dispatchEvent(new CustomEvent('mini-mode-change', { detail: { mini: true } }))
 }
 
+async function exitMini () {
+  await windowApi.toggleMini(false)
+  window.dispatchEvent(new CustomEvent('mini-mode-change', { detail: { mini: false } }))
+}
+
 async function minimize () {
   await windowApi.minimize()
 }
@@ -88,6 +93,24 @@ async function closeWin () {
         <svg viewBox="0 0 16 16" width="14" height="14">
           <rect x="2" y="2" width="9" height="9" :fill="'none'" stroke="currentColor" stroke-width="1.4"/>
           <rect x="5" y="5" width="9" height="9" :fill="'currentColor'"/>
+        </svg>
+      </button>
+
+      <button
+        v-else
+        class="win-btn"
+        title="放大为主窗口"
+        @click="exitMini"
+      >
+        <svg viewBox="0 0 16 16" width="14" height="14">
+          <path
+            d="M2 2 L7 2 M2 2 L2 7 M14 9 L9 9 M14 9 L14 14 M2 14 L7 14 M2 14 L2 9"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.6"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
         </svg>
       </button>
 
