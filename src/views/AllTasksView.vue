@@ -78,6 +78,7 @@ function clearFilter () {
         @toggle-status="(id, s) => taskStore.setStatus(id, s)"
         @set-progress="(id, p) => taskStore.setProgress(id, p)"
         @start-pomodoro="(id) => router.push({ path: '/timer', query: { taskId: id } })"
+        @reorder="taskStore.reorder"
       />
     </div>
 

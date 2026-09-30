@@ -3,7 +3,9 @@ import { defineStore } from 'pinia'
 import { dataApi } from '../services/api'
 import { genId, isToday, isOverdue, todayIso } from '../utils/time'
 
-const PRIORITY_ORDER = { high: 0, medium: 1, low: 2 }
+// 列表顺序 = 手动顺序（sortOrder），这样拖动换位才说了算；
+// 优先级仍然用颜色标签显示，也仍然可以筛选。
+const byManualOrder = (a, b) => (a.sortOrder || 0) - (b.sortOrder || 0)
 
 // 跨天自动刷新：isToday() 读的是当前时间，不是响应式数据，
 // 所以用 todayKey 作为依赖，日期变了就让「今日」相关视图重新计算。
@@ -51,7 +53,7 @@ export const useTaskStore = defineStore('tasks', {
       void state.todayKey // 建立跨天依赖
       return state.tasks
         .filter(isTodayTask)
-        .sort((a, b) => (PRIORITY_ORDER[a.priority] - PRIORITY_ORDER[b.priority]) || ((a.sortOrder || 0) - (b.sortOrder || 0)))
+        .sort(byManualOrder)
     },
     overdueTasks (state) {
       return state.tasks.filter(t => t.status !== 'completed' && isOverdue(t.dueTime))
@@ -77,7 +79,7 @@ export const useTaskStore = defineStore('tasks', {
           if (state.filter.scope === 'overdue' && !(t.status !== 'completed' && isOverdue(t.dueTime))) return false
           return true
         })
-        .sort((a, b) => (PRIORITY_ORDER[a.priority] - PRIORITY_ORDER[b.priority]) || ((a.sortOrder || 0) - (b.sortOrder || 0)))
+        .sort(byManualOrder)
     }
   },
   actions: {
@@ -160,12 +162,16 @@ export const useTaskStore = defineStore('tasks', {
       }
       return this.update(id, patch)
     },
-    async reorder (fromId, toId) {
+    // 拖动排序：把 fromId 插到 toId 的前面或后面（position: before | after）
+    async reorder (fromId, toId, position = 'before') {
       const fromIdx = this.tasks.findIndex(t => t.id === fromId)
       const toIdx = this.tasks.findIndex(t => t.id === toId)
-      if (fromIdx < 0 || toIdx < 0) return
+      if (fromIdx < 0 || toIdx < 0 || fromIdx === toIdx) return
+      // 目标索引按「移除之后」的数组位置换算
+      let insertAt = position === 'after' ? toIdx + 1 : toIdx
+      if (fromIdx < insertAt) insertAt -= 1
       const [moved] = this.tasks.splice(fromIdx, 1)
-      this.tasks.splice(toIdx, 0, moved)
+      this.tasks.splice(insertAt, 0, moved)
       this.tasks.forEach((t, i) => { t.sortOrder = i })
       await this.persist()
     },

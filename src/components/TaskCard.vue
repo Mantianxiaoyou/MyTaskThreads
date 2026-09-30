@@ -1,16 +1,55 @@
 <script setup>
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { isOverdue, formatDueTime } from '../utils/time'
 
 const props = defineProps({
   task: { type: Object, required: true }
 })
-const emit = defineEmits(['edit', 'delete', 'toggle-status', 'set-progress', 'start-pomodoro'])
+const emit = defineEmits(['edit', 'delete', 'toggle-status', 'set-progress', 'start-pomodoro', 'reorder'])
 
 const priorityLabel = computed(() => ({ high: '高', medium: '中', low: '低' }[props.task.priority] || '中'))
 const overdue = computed(() => props.task.status !== 'completed' && isOverdue(props.task.dueTime))
 const completed = computed(() => props.task.status === 'completed')
 const progress = computed(() => Math.max(0, Math.min(100, props.task.progress || 0)))
+
+// 拖动排序：只让卡片里的握把发起拖动，避免和进度滑块、按钮抢事件
+const dragging = ref(false)
+const dropPos = ref('')
+
+function onDragStart (e) {
+  dragging.value = true
+  e.dataTransfer.effectAllowed = 'move'
+  e.dataTransfer.setData('text/plain', props.task.id)
+  const card = e.currentTarget.closest('.task-card')
+  if (card) e.dataTransfer.setDragImage(card, 24, 24)
+}
+
+function onDragEnd () {
+  dragging.value = false
+  dropPos.value = ''
+}
+
+function onDragOver (e) {
+  e.preventDefault()
+  if (dragging.value) return // 拖到自己身上不显示插入线
+  e.dataTransfer.dropEffect = 'move'
+  const rect = e.currentTarget.getBoundingClientRect()
+  dropPos.value = e.clientY < rect.top + rect.height / 2 ? 'before' : 'after'
+}
+
+function onDragLeave () {
+  dropPos.value = ''
+}
+
+function onDrop (e) {
+  e.preventDefault()
+  const fromId = e.dataTransfer.getData('text/plain')
+  const position = dropPos.value || 'before'
+  dropPos.value = ''
+  dragging.value = false
+  if (!fromId || fromId === props.task.id) return
+  emit('reorder', fromId, props.task.id, position)
+}
 
 function onProgress (e) {
   emit('set-progress', props.task.id, Number(e.target.value))
@@ -23,7 +62,10 @@ function toggleComplete () {
 <template>
   <div
     class="task-card"
-    :class="[`status-${task.status}`, `p-${task.priority}`, { overdue, completed }]"
+    :class="[`status-${task.status}`, `p-${task.priority}`, { overdue, completed, dragging, 'drop-before': dropPos === 'before', 'drop-after': dropPos === 'after' }]"
+    @dragover="onDragOver"
+    @dragleave="onDragLeave"
+    @drop="onDrop"
   >
     <div class="left-line"></div>
     <div class="card-body">
@@ -36,6 +78,14 @@ function toggleComplete () {
           />
           <span class="checkbox-fake"></span>
         </label>
+
+        <span
+          class="grip"
+          draggable="true"
+          title="按住拖动排序"
+          @dragstart="onDragStart"
+          @dragend="onDragEnd"
+        >⋮⋮</span>
 
         <div class="title-area">
           <div class="title" :title="task.title">{{ task.title }}</div>
@@ -127,6 +177,45 @@ function toggleComplete () {
   align-items: flex-start;
   gap: 8px;
 }
+
+/* 拖动手柄：只有它能发起拖动，避免和复选框 / 滑块 / 按钮抢事件 */
+.grip {
+  flex-shrink: 0;
+  padding: 1px 3px;
+  margin-top: 1px;
+  font-size: 11px;
+  line-height: 1;
+  letter-spacing: -1px;
+  color: var(--fg-mute);
+  border-radius: var(--radius-sm);
+  cursor: grab;
+  user-select: none;
+  transition: all var(--duration-fast) var(--ease);
+}
+.grip:hover {
+  color: var(--fg-soft);
+  background: var(--bg-strong);
+}
+.grip:active {
+  cursor: grabbing;
+}
+
+/* 拖动中的卡片与被拖到的那条插入线 */
+.task-card.dragging {
+  opacity: 0.45;
+}
+.task-card.drop-before::before,
+.task-card.drop-after::after {
+  content: '';
+  position: absolute;
+  left: 10px;
+  right: 10px;
+  height: 2px;
+  background: var(--primary);
+  border-radius: 2px;
+}
+.task-card.drop-before::before { top: 0; }
+.task-card.drop-after::after { bottom: 0; }
 
 /* 复选框 */
 .check-wrap {

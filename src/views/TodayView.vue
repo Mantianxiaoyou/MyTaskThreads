@@ -69,6 +69,7 @@ function startPomodoro (taskId) {
         @toggle-status="toggleStatus"
         @set-progress="setProgress"
         @start-pomodoro="startPomodoro"
+        @reorder="taskStore.reorder"
       />
     </div>
 
