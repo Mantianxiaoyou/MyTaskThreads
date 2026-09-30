@@ -1,6 +1,7 @@
 <script setup>
-import { computed, ref } from 'vue'
+import { computed } from 'vue'
 import { isOverdue, formatDueTime } from '../utils/time'
+import { useTaskDrag } from '../composables/useTaskDrag'
 
 const props = defineProps({
   task: { type: Object, required: true }
@@ -13,43 +14,9 @@ const completed = computed(() => props.task.status === 'completed')
 const progress = computed(() => Math.max(0, Math.min(100, props.task.progress || 0)))
 
 // 拖动排序：只让卡片里的握把发起拖动，避免和进度滑块、按钮抢事件
-const dragging = ref(false)
-const dropPos = ref('')
-
-function onDragStart (e) {
-  dragging.value = true
-  e.dataTransfer.effectAllowed = 'move'
-  e.dataTransfer.setData('text/plain', props.task.id)
-  const card = e.currentTarget.closest('.task-card')
-  if (card) e.dataTransfer.setDragImage(card, 24, 24)
-}
-
-function onDragEnd () {
-  dragging.value = false
-  dropPos.value = ''
-}
-
-function onDragOver (e) {
-  e.preventDefault()
-  if (dragging.value) return // 拖到自己身上不显示插入线
-  e.dataTransfer.dropEffect = 'move'
-  const rect = e.currentTarget.getBoundingClientRect()
-  dropPos.value = e.clientY < rect.top + rect.height / 2 ? 'before' : 'after'
-}
-
-function onDragLeave () {
-  dropPos.value = ''
-}
-
-function onDrop (e) {
-  e.preventDefault()
-  const fromId = e.dataTransfer.getData('text/plain')
-  const position = dropPos.value || 'before'
-  dropPos.value = ''
-  dragging.value = false
-  if (!fromId || fromId === props.task.id) return
-  emit('reorder', fromId, props.task.id, position)
-}
+const { draggingId, overId, overPos, onDragStart, onDragEnd, onDragOver, onDragLeave, onDrop } = useTaskDrag(
+  (fromId, toId, position) => emit('reorder', fromId, toId, position)
+)
 
 function onProgress (e) {
   emit('set-progress', props.task.id, Number(e.target.value))
@@ -62,10 +29,11 @@ function toggleComplete () {
 <template>
   <div
     class="task-card"
-    :class="[`status-${task.status}`, `p-${task.priority}`, { overdue, completed, dragging, 'drop-before': dropPos === 'before', 'drop-after': dropPos === 'after' }]"
-    @dragover="onDragOver"
-    @dragleave="onDragLeave"
-    @drop="onDrop"
+    data-drag-item
+    :class="[`status-${task.status}`, `p-${task.priority}`, { overdue, completed, dragging: draggingId === task.id, 'drop-before': overId === task.id && overPos === 'before', 'drop-after': overId === task.id && overPos === 'after' }]"
+    @dragover="e => onDragOver(e, task.id)"
+    @dragleave="onDragLeave(task.id)"
+    @drop="e => onDrop(e, task.id)"
   >
     <div class="left-line"></div>
     <div class="card-body">
@@ -83,7 +51,7 @@ function toggleComplete () {
           class="grip"
           draggable="true"
           title="按住拖动排序"
-          @dragstart="onDragStart"
+          @dragstart="e => onDragStart(e, task.id)"
           @dragend="onDragEnd"
         >
           <svg viewBox="0 0 10 16" width="10" height="16" aria-hidden="true">

@@ -5,12 +5,19 @@ import { useTaskStore } from '../stores/taskStore'
 import { useTimerStore } from '../stores/timerStore'
 import { useSettingsStore } from '../stores/settingsStore'
 import { useBackground } from '../composables/useBackground'
+import { useTaskDrag } from '../composables/useTaskDrag'
 import { formatTime } from '../utils/time'
 
 const taskStore = useTaskStore()
 const timerStore = useTimerStore()
 const settingsStore = useSettingsStore()
 const { bgStyle, bgImageStyle } = useBackground('mini') // mini 小窗以 --bg-elevated 为基准色
+
+// 小窗里也能拖动排序：列表是另一套标记，和主窗口共用同一套拖动逻辑
+const {
+  draggingId, overId, overPos,
+  onDragStart, onDragEnd, onDragOver, onDragLeave, onDrop
+} = useTaskDrag((fromId, toId, position) => taskStore.reorder(fromId, toId, position))
 
 const activeTab = ref('tasks') // tasks | timer
 
@@ -130,8 +137,36 @@ async function resumeTimer () {
           v-for="t in todayTasks"
           :key="t.id"
           class="task-item"
-          :class="`p-${t.priority}`, `s-${t.status}`"
+          data-drag-item
+          :class="[
+            `p-${t.priority}`,
+            `s-${t.status}`,
+            {
+              dragging: draggingId === t.id,
+              'drop-before': overId === t.id && overPos === 'before',
+              'drop-after': overId === t.id && overPos === 'after'
+            }
+          ]"
+          @dragover="e => onDragOver(e, t.id)"
+          @dragleave="onDragLeave(t.id)"
+          @drop="e => onDrop(e, t.id)"
         >
+          <span
+            class="grip"
+            draggable="true"
+            title="按住拖动排序"
+            @dragstart="e => onDragStart(e, t.id)"
+            @dragend="onDragEnd"
+          >
+            <svg viewBox="0 0 10 16" width="8" height="12" aria-hidden="true">
+              <circle cx="2.5" cy="3" r="1.8" />
+              <circle cx="7.5" cy="3" r="1.8" />
+              <circle cx="2.5" cy="8" r="1.8" />
+              <circle cx="7.5" cy="8" r="1.8" />
+              <circle cx="2.5" cy="13" r="1.8" />
+              <circle cx="7.5" cy="13" r="1.8" />
+            </svg>
+          </span>
           <input
             type="checkbox"
             :checked="t.status === 'completed'"
@@ -320,7 +355,51 @@ async function resumeTimer () {
   border-radius: var(--radius-md);
   border-left: 3px solid transparent;
   transition: all var(--duration-fast) var(--ease);
+  position: relative;
 }
+
+/* 拖动排序：小窗空间小，握把做紧凑一些，但保留底色方便发现 */
+.grip {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 22px;
+  border-radius: var(--radius-sm);
+  background: var(--bg-strong);
+  color: var(--fg-soft);
+  cursor: grab;
+  user-select: none;
+  transition: all var(--duration-fast) var(--ease);
+}
+.grip svg {
+  fill: currentColor;
+  pointer-events: none;
+}
+.grip:hover {
+  background: var(--primary-soft);
+  color: var(--primary);
+}
+.grip:active {
+  cursor: grabbing;
+  background: var(--primary-mute);
+}
+.task-item.dragging {
+  opacity: 0.45;
+}
+.task-item.drop-before::before,
+.task-item.drop-after::after {
+  content: '';
+  position: absolute;
+  left: 6px;
+  right: 6px;
+  height: 2px;
+  background: var(--primary);
+  border-radius: 2px;
+}
+.task-item.drop-before::before { top: 0; }
+.task-item.drop-after::after { bottom: 0; }
 .task-item:hover {
   background: var(--bg-strong);
 }
