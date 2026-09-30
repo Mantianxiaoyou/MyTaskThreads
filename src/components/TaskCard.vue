@@ -1,6 +1,6 @@
 <script setup>
 import { computed } from 'vue'
-import { isOverdue, isoToLocal } from '../utils/time'
+import { isOverdue, formatDueTime } from '../utils/time'
 
 const props = defineProps({
   task: { type: Object, required: true }
@@ -43,7 +43,7 @@ function toggleComplete () {
             <span class="cat" v-if="task.category">{{ task.category }}</span>
             <span class="priority" :class="`p-${task.priority}`">{{ priorityLabel }}</span>
             <span v-if="task.dueTime" class="due" :class="{ overdue }">
-              {{ overdue ? '已超期 ' : '截止 ' }}{{ isoToLocal(task.dueTime) }}
+              {{ overdue ? '已超期 ' : '截止 ' }}{{ formatDueTime(task.dueTime) }}
             </span>
             <span v-if="task.pomodoroCount > 0" class="pomo">🍅 {{ task.pomodoroCount }}</span>
           </div>
