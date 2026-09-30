@@ -1,15 +1,42 @@
 // 任务 Store：CRUD、过滤、排序、分类/标签
 import { defineStore } from 'pinia'
 import { dataApi } from '../services/api'
-import { genId, isToday, isOverdue } from '../utils/time'
+import { genId, isToday, isOverdue, todayIso } from '../utils/time'
 
 const PRIORITY_ORDER = { high: 0, medium: 1, low: 2 }
+
+// 跨天自动刷新：isToday() 读的是当前时间，不是响应式数据，
+// 所以用 todayKey 作为依赖，日期变了就让「今日」相关视图重新计算。
+let dayTimer = null
+function startDayWatcher (store) {
+  if (dayTimer) return
+  dayTimer = setInterval(() => {
+    const key = todayIso()
+    if (store.todayKey !== key) store.todayKey = key
+  }, 30000)
+}
+
+// 「今日任务」判定：
+//   1. 计划开始 / 截止 / 创建时间落在今天
+//   2. 进行中的任务
+//   3. 无期限任务（既没计划开始也没截止时间）：没做完就一直留在今日，
+//      做完后只在完成当天显示
+export function isTodayTask (t) {
+  if (!t) return false
+  if (isToday(t.plannedStart) || isToday(t.dueTime) || isToday(t.createdAt)) return true
+  if (t.status === 'in_progress') return true
+  if (!t.plannedStart && !t.dueTime) {
+    return t.status !== 'completed' || isToday(t.completedAt)
+  }
+  return false
+}
 
 export const useTaskStore = defineStore('tasks', {
   state: () => ({
     tasks: [],
     categories: ['工作', '学习', '生活'],
     tags: [],
+    todayKey: todayIso(),
     filter: {
       category: null,
       tag: null,
@@ -21,9 +48,9 @@ export const useTaskStore = defineStore('tasks', {
   }),
   getters: {
     todayTasks (state) {
-      // 今日任务：计划开始/截止在今日、或今日创建、或进行中
+      void state.todayKey // 建立跨天依赖
       return state.tasks
-        .filter(t => isToday(t.plannedStart) || isToday(t.dueTime) || isToday(t.createdAt) || (t.status === 'in_progress'))
+        .filter(isTodayTask)
         .sort((a, b) => (PRIORITY_ORDER[a.priority] - PRIORITY_ORDER[b.priority]) || ((a.sortOrder || 0) - (b.sortOrder || 0)))
     },
     overdueTasks (state) {
@@ -39,13 +66,14 @@ export const useTaskStore = defineStore('tasks', {
       return (this.todayTasks || []).length
     },
     filtered (state) {
+      void state.todayKey // 建立跨天依赖
       return state.tasks
         .filter(t => {
           if (state.filter.category && t.category !== state.filter.category) return false
           if (state.filter.tag && !(t.tags || []).includes(state.filter.tag)) return false
           if (state.filter.status && t.status !== state.filter.status) return false
           if (state.filter.priority && t.priority !== state.filter.priority) return false
-          if (state.filter.scope === 'today' && !(isToday(t.plannedStart) || isToday(t.dueTime))) return false
+          if (state.filter.scope === 'today' && !isTodayTask(t)) return false
           if (state.filter.scope === 'overdue' && !(t.status !== 'completed' && isOverdue(t.dueTime))) return false
           return true
         })
@@ -58,7 +86,9 @@ export const useTaskStore = defineStore('tasks', {
       this.tasks = data.tasks || []
       this.categories = data.categories || ['工作', '学习', '生活']
       this.tags = data.tags || []
+      this.todayKey = todayIso()
       this.loaded = true
+      startDayWatcher(this)
     },
     async persist () {
       // 从磁盘加载最新数据，仅覆盖 tasks/categories/tags 字段
