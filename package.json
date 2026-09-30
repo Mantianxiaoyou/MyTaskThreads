@@ -34,8 +34,8 @@
     "wait-on": "^7.2.0"
   },
   "build": {
-    "appId": "com.you.workscheduler",
-    "productName": "工作进度提醒",
+    "appId": "com.mantianxiaoyou.mytaskthreads",
+    "productName": "MyTaskThreads",
     "directories": {
       "output": "release"
     },

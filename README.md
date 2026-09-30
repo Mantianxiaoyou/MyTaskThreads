@@ -139,9 +139,9 @@ git push origin v1.0.0
 
 数据保存在 Electron userData 目录下的 tasks.json：
 
-- Windows：`%APPDATA%/工作进度提醒/tasks.json`
-- macOS：`~/Library/Application Support/工作进度提醒/tasks.json`
-- Linux：`~/.config/工作进度提醒/tasks.json`
+- Windows：`%APPDATA%/MyTaskThreads/tasks.json`
+- macOS：`~/Library/Application Support/MyTaskThreads/tasks.json`
+- Linux：`~/.config/MyTaskThreads/tasks.json`
 
 可在「设置 → 数据」中导出 / 导入备份。背景图片只记录文件路径，不占用数据文件体积。
 

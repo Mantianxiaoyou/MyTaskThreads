@@ -6,6 +6,11 @@ const { createTray } = require('./tray')
 const { initNotificationScheduler } = require('./notifications')
 const { loadData } = require('./data.service')
 
+// 固定应用名：userData 目录（数据文件所在位置）由它决定。
+// 不显式指定时开发模式取 package.json 的 name、打包后取 productName，
+// 两者写法不同就会出现两套数据目录，所以这里统一成 MyTaskThreads。
+app.setName('MyTaskThreads')
+
 let mainWindow = null
 let tray = null
 
