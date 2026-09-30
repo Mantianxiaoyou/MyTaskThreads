@@ -4,9 +4,11 @@ import Sidebar from './components/Sidebar.vue'
 import TitleBar from './components/TitleBar.vue'
 import MiniView from './views/MiniView.vue'
 import { useSettingsStore } from './stores/settingsStore'
+import { useBackground } from './composables/useBackground'
 
 const miniMode = ref(false)
 const settingsStore = useSettingsStore()
+const { bgStyle } = useBackground()
 
 const isMini = computed(() => miniMode.value)
 
@@ -43,7 +45,7 @@ onMounted(async () => {
 
 <template>
   <MiniView v-if="isMini" />
-  <div v-else class="app-layout">
+  <div v-else class="app-layout" :style="bgStyle">
     <TitleBar />
     <div class="app-body">
       <Sidebar />
@@ -64,6 +66,8 @@ onMounted(async () => {
   flex-direction: column;
   height: 100vh;
   overflow: hidden;
+  /* 兜底：自定义背景（内联样式）不可用时退回主题背景色 */
+  background: var(--bg);
 }
 .app-body {
   flex: 1;

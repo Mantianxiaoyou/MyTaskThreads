@@ -13,7 +13,10 @@ const DEFAULT_SETTINGS = {
   launchOnBoot: false,
   alwaysOnTop: false,
   theme: 'auto',
-  remindBeforeMin: 10
+  remindBeforeMin: 10,
+  // 窗口背景自定义（主窗口与 mini 小窗共用）
+  bgOpacity: 100,      // 背景不透明度 0-100，100 = 完全不透明
+  bgBrightness: 50     // 背景明暗 50 = 跟随主题，<50 更暗，>50 更亮
 }
 
 export const useSettingsStore = defineStore('settings', {
@@ -34,6 +37,10 @@ export const useSettingsStore = defineStore('settings', {
           document.documentElement.setAttribute('data-theme', 'light')
         }
       }
+    },
+    // 预览：只改内存中的值，让滑块拖动时即时生效，不写磁盘
+    preview (patch) {
+      this.settings = { ...this.settings, ...patch }
     },
     async update (patch) {
       this.settings = { ...this.settings, ...patch }

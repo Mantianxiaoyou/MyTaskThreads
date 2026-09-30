@@ -94,7 +94,8 @@ function toggleCollapse () {
 <style scoped>
 .sidebar {
   width: 200px;
-  background: var(--bg-soft);
+  /* 半透明填充：让自定义窗口背景（含不透明度）能透出来 */
+  background: color-mix(in srgb, var(--bg-soft) 60%, transparent);
   border-right: 1px solid var(--border);
   display: flex;
   flex-direction: column;

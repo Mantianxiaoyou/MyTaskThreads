@@ -4,11 +4,13 @@ import TitleBar from '../components/TitleBar.vue'
 import { useTaskStore } from '../stores/taskStore'
 import { useTimerStore } from '../stores/timerStore'
 import { useSettingsStore } from '../stores/settingsStore'
+import { useBackground } from '../composables/useBackground'
 import { formatTime } from '../utils/time'
 
 const taskStore = useTaskStore()
 const timerStore = useTimerStore()
 const settingsStore = useSettingsStore()
+const { bgStyle } = useBackground('mini') // mini 小窗以 --bg-elevated 为基准色
 
 const activeTab = ref('tasks') // tasks | timer
 
@@ -62,7 +64,7 @@ async function resumeTimer () {
 </script>
 
 <template>
-  <div class="mini-view">
+  <div class="mini-view" :style="bgStyle">
     <TitleBar :mini="true" />
 
     <div class="mini-summary">
@@ -149,6 +151,7 @@ async function resumeTimer () {
   display: flex;
   flex-direction: column;
   height: 100vh;
+  /* 兜底：自定义背景（内联样式）不可用时退回主题背景色 */
   background: var(--bg-elevated);
   color: var(--fg);
   padding: 8px;

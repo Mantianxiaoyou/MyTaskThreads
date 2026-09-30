@@ -83,7 +83,7 @@
 
 html, body, #app {
   height: 100%;
-  background: var(--bg);
+  background: transparent;
   color: var(--fg);
   font-family: var(--font-sans);
   font-size: 13px;
@@ -207,7 +207,7 @@ input:hover, textarea:hover, select:hover {
   opacity: 0;
 }
 
-/* mini 模式根标记 */
+/* mini 模式根标记：窗口背景由 MiniView 上的自定义背景绘制，这里必须保持透明 */
 body.mini-mode {
-  background: var(--bg-elevated);
+  background: transparent;
 }

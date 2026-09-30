@@ -136,7 +136,8 @@ async function closeWin () {
   align-items: center;
   justify-content: space-between;
   height: 32px;
-  background: var(--bg-soft);
+  /* 透明填充：标题栏跟随窗口背景，窗口背景半透明时不会留下不透明白条 */
+  background: transparent;
   border-bottom: 1px solid var(--border);
   -webkit-app-region: drag;
   flex-shrink: 0;
@@ -144,7 +145,7 @@ async function closeWin () {
 }
 .titlebar.mini {
   height: 28px;
-  background: var(--bg-elevated);
+  background: transparent;
 }
 
 .drag-area {

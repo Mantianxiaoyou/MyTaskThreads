@@ -22,7 +22,8 @@ function createWindow () {
     frame: false,
     titleBarStyle: 'hidden',
     title: '工作进度提醒',
-    backgroundColor: '#ffffff',
+    transparent: true,
+    backgroundColor: '#00000000',
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,

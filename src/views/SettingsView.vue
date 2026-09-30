@@ -1,6 +1,7 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useSettingsStore } from '../stores/settingsStore'
+import { useBackground } from '../composables/useBackground'
 
 const settingsStore = useSettingsStore()
 
@@ -19,6 +20,27 @@ onMounted(async () => {
 
 async function update (patch) {
   await settingsStore.update(patch)
+}
+
+// 背景预览：与窗口实际使用的样式同源（主窗口基准色）
+const { bgStyle: previewBgStyle } = useBackground()
+
+// 明暗滑块的文字说明：显示相对基准色的混合比例
+const brightnessLabel = computed(() => {
+  const b = Number(settingsStore.settings.bgBrightness ?? 50)
+  if (b === 50) return '跟随主题'
+  return (b < 50 ? '更暗 ' : '更亮 ') + Math.abs(b - 50) * 2 + '%'
+})
+
+const DEFAULT_BG = { bgOpacity: 100, bgBrightness: 50 }
+
+// 拖动滑块时只改内存值（实时预览），松手（change）才写入磁盘
+function previewBg (patch) {
+  settingsStore.preview(patch)
+}
+
+async function resetBackground () {
+  await update({ ...DEFAULT_BG })
 }
 
 async function exportData () {
@@ -107,6 +129,41 @@ async function importData () {
                @change="e => update({ minimizeToTray: e.target.checked })" />
         最小化到托盘
       </label>
+
+      <div class="subgroup">
+        <h4>窗口背景</h4>
+        <div class="slider-row">
+          <label class="slider-label">不透明度</label>
+          <input
+            type="range"
+            min="0"
+            max="100"
+            step="1"
+            :value="settingsStore.settings.bgOpacity"
+            @input="e => previewBg({ bgOpacity: Number(e.target.value) })"
+            @change="e => update({ bgOpacity: Number(e.target.value) })"
+          />
+          <span class="slider-value">{{ settingsStore.settings.bgOpacity }}%</span>
+        </div>
+        <div class="slider-row">
+          <label class="slider-label">明暗程度</label>
+          <input
+            type="range"
+            min="0"
+            max="100"
+            step="1"
+            :value="settingsStore.settings.bgBrightness"
+            @input="e => previewBg({ bgBrightness: Number(e.target.value) })"
+            @change="e => update({ bgBrightness: Number(e.target.value) })"
+          />
+          <span class="slider-value">{{ brightnessLabel }}</span>
+        </div>
+        <div class="bg-preview" :style="previewBgStyle"></div>
+        <div class="hint">
+          窗口背景对主窗口和 mini 小窗同时生效：不透明度越低越能透出桌面，明暗程度调整背景颜色的深浅。
+        </div>
+        <button class="reset-bg" @click="resetBackground">恢复默认背景</button>
+      </div>
     </div>
 
     <div v-if="activeSection === 'data'" class="card form">
@@ -144,4 +201,64 @@ async function importData () {
 .form .check { display: flex; align-items: center; gap: 8px; cursor: pointer; }
 .form .check input[type="checkbox"] { width: 16px; height: 16px; }
 .hint { font-size: 11px; color: var(--fg-soft); margin-top: 4px; }
+
+.subgroup {
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px dashed var(--border);
+}
+.subgroup h4 {
+  font-size: 12px;
+  color: var(--fg);
+  margin-bottom: 8px;
+  font-weight: 600;
+}
+.slider-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+.slider-label {
+  flex: 0 0 80px;
+  font-size: 11px;
+  color: var(--fg-soft);
+}
+.slider-row input[type="range"] {
+  flex: 1;
+  margin: 0;
+}
+.slider-value {
+  flex: 0 0 80px;
+  text-align: right;
+  font-size: 11px;
+  color: var(--fg);
+  font-variant-numeric: tabular-nums;
+}
+.reset-bg {
+  align-self: flex-start;
+  margin-top: 8px;
+  font-size: 11px;
+}
+.bg-preview {
+  height: 40px;
+  margin-top: 4px;
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--radius-md);
+  background-image: linear-gradient(45deg, var(--border) 25%, transparent 25%, transparent 75%, var(--border) 75%),
+    linear-gradient(45deg, var(--border) 25%, transparent 25%, transparent 75%, var(--border) 75%);
+  background-size: 12px 12px;
+  background-position: 0 0, 6px 6px;
+  position: relative;
+}
+.bg-preview::after {
+  content: '预览';
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  color: var(--fg-mute);
+}
 </style>
