@@ -1,0 +1,56 @@
+// 设置 Store：负责加载/保存 settings 部分到主进程
+import { defineStore } from 'pinia'
+import { dataApi, systemApi, windowApi } from '../services/api'
+
+const DEFAULT_SETTINGS = {
+  pomodoroFocus: 25,
+  pomodoroBreak: 5,
+  pomodoroLongBreak: 15,
+  longBreakInterval: 4,
+  notificationsEnabled: true,
+  minimizeToTray: true,
+  autoStartNext: false,
+  launchOnBoot: false,
+  alwaysOnTop: false,
+  theme: 'auto',
+  remindBeforeMin: 10
+}
+
+export const useSettingsStore = defineStore('settings', {
+  state: () => ({
+    settings: { ...DEFAULT_SETTINGS },
+    loaded: false
+  }),
+  actions: {
+    async init () {
+      const data = await dataApi.load()
+      this.settings = { ...DEFAULT_SETTINGS, ...(data?.settings || {}) }
+      this.loaded = true
+      if (this.settings.theme) {
+        await systemApi.setTheme(this.settings.theme)
+        if (this.settings.theme === 'dark') {
+          document.documentElement.setAttribute('data-theme', 'dark')
+        } else if (this.settings.theme === 'light') {
+          document.documentElement.setAttribute('data-theme', 'light')
+        }
+      }
+    },
+    async update (patch) {
+      this.settings = { ...this.settings, ...patch }
+      const full = await dataApi.load()
+      full.settings = { ...this.settings }
+      await dataApi.save(full)
+      if ('theme' in patch) {
+        await systemApi.setTheme(patch.theme)
+        if (patch.theme === 'dark') document.documentElement.setAttribute('data-theme', 'dark')
+        else if (patch.theme === 'light') document.documentElement.setAttribute('data-theme', 'light')
+      }
+      if ('alwaysOnTop' in patch) {
+        await windowApi.setAlwaysOnTop(patch.alwaysOnTop)
+      }
+      if ('launchOnBoot' in patch) {
+        await systemApi.setAutoLaunch(patch.launchOnBoot)
+      }
+    }
+  }
+})
