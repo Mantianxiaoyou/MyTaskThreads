@@ -75,25 +75,44 @@ function removeTag (t) {
   if (i >= 0) form.value.tags.splice(i, 1)
 }
 
+const saving = ref(false)
+const errMsg = ref('')
+
 async function save () {
-  const payload = {
-    title: form.value.title.trim() || '未命名任务',
-    description: form.value.description,
-    category: form.value.category,
-    tags: [...form.value.tags],
-    priority: form.value.priority,
-    status: form.value.status,
-    progress: form.value.progress,
-    plannedStart: localToIso(form.value.plannedStart),
-    dueTime: localToIso(form.value.dueTime)
+  // 标题必填校验
+  const title = form.value.title.trim()
+  if (!title) {
+    errMsg.value = '请输入任务标题'
+    return
   }
-  if (props.taskId) {
-    await taskStore.update(props.taskId, payload)
-  } else {
-    await taskStore.create(payload)
+  errMsg.value = ''
+  // 防止重复点击
+  if (saving.value) return
+  saving.value = true
+  try {
+    const payload = {
+      title,
+      description: form.value.description,
+      category: form.value.category,
+      tags: [...form.value.tags],
+      priority: form.value.priority,
+      status: form.value.status,
+      progress: form.value.progress,
+      plannedStart: localToIso(form.value.plannedStart),
+      dueTime: localToIso(form.value.dueTime)
+    }
+    if (props.taskId) {
+      await taskStore.update(props.taskId, payload)
+    } else {
+      await taskStore.create(payload)
+    }
+    show.value = false
+    emit('saved')
+  } catch (e) {
+    errMsg.value = '保存失败：' + (e?.message || e)
+  } finally {
+    saving.value = false
   }
-  show.value = false
-  emit('saved')
 }
 </script>
 
@@ -157,8 +176,9 @@ async function save () {
           <input type="range" min="0" max="100" v-model.number="form.progress" />
         </div>
         <div class="editor-footer">
-          <button @click="show = false">取消</button>
-          <button class="primary" @click="save">保存</button>
+          <div v-if="errMsg" class="err">{{ errMsg }}</div>
+          <button @click="show = false" :disabled="saving">取消</button>
+          <button class="primary" @click="save" :disabled="saving">{{ saving ? '保存中…' : '保存' }}</button>
         </div>
       </div>
     </div>
@@ -259,5 +279,10 @@ async function save () {
 .slide-enter-from .editor-panel,
 .slide-leave-to .editor-panel {
   transform: translateX(100%);
+}
+.err {
+  color: var(--danger);
+  font-size: 12px;
+  margin-right: auto;
 }
 </style>

@@ -21,8 +21,9 @@ export const useTaskStore = defineStore('tasks', {
   }),
   getters: {
     todayTasks (state) {
+      // 今日任务：计划开始/截止在今日、或今日创建、或进行中
       return state.tasks
-        .filter(t => isToday(t.plannedStart) || isToday(t.dueTime) || (t.status === 'in_progress'))
+        .filter(t => isToday(t.plannedStart) || isToday(t.dueTime) || isToday(t.createdAt) || (t.status === 'in_progress'))
         .sort((a, b) => (PRIORITY_ORDER[a.priority] - PRIORITY_ORDER[b.priority]) || ((a.sortOrder || 0) - (b.sortOrder || 0)))
     },
     overdueTasks (state) {
