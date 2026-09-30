@@ -1,13 +1,13 @@
-@echo off
+ï»¿@echo off
 chcp 65001 >nul
 cd /d "%~dp0"
-title ¹¤×÷½ø¶ÈÌáĞÑ - Æô¶¯Æ÷
+title é¢å‘ç¤¾ç•œçš„å¤šçº¿ç¨‹ç®¡ç†å™¨ - å¯åŠ¨å™¨
 
 if not exist "dist\index.html" (
-    echo Ê×´ÎÔËĞĞ£¬ÕıÔÚ¹¹½¨Ó¦ÓÃ...
+    echo é¦–æ¬¡è¿è¡Œï¼Œæ­£åœ¨æ„å»ºåº”ç”¨...
     call npm run build
 )
 
-echo ÕıÔÚÆô¶¯Ó¦ÓÃ...
+echo æ­£åœ¨å¯åŠ¨åº”ç”¨...
 start "" /b npx electron .
 exit

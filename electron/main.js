@@ -21,7 +21,7 @@ function createWindow () {
     show: false,
     frame: false,
     titleBarStyle: 'hidden',
-    title: '工作进度提醒',
+    title: '面向社畜的多线程管理器',
     transparent: true,
     backgroundColor: '#00000000',
     webPreferences: {

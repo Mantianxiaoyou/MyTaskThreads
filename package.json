@@ -1,9 +1,9 @@
 {
   "name": "work-scheduler",
   "version": "1.0.0",
-  "description": "桌面工作进度提醒工具：任务管理、番茄钟、实时提醒、统计回顾",
+  "description": "面向社畜的多线程管理器：把每天的待办当线程挂起来，到点提醒、便利贴式置顶小窗，数据本地存储、运行时零联网",
   "main": "electron/main.js",
-  "author": "you",
+  "author": "Mantianxiaoyou",
   "license": "MIT",
   "scripts": {
     "dev": "concurrently -k \"vite\" \"wait-on tcp:5173 && cross-env DEV=1 electron .\"",

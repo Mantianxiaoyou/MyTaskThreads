@@ -21,10 +21,10 @@ function createTray (mainWindow) {
   }
 
   const tray = new Tray(icon)
-  tray.setToolTip('工作进度提醒')
+  tray.setToolTip('面向社畜的多线程管理器')
 
   const buildContextMenu = () => Menu.buildFromTemplate([
-    { label: '工作进度提醒', enabled: false },
+    { label: '面向社畜的多线程管理器', enabled: false },
     { type: 'separator' },
     {
       label: '显示主窗口',

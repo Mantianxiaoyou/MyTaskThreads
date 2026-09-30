@@ -47,7 +47,7 @@ function toggleCollapse () {
 <template>
   <aside class="sidebar" :class="{ collapsed }">
     <div class="logo-row">
-      <div v-if="!collapsed" class="logo">工作进度提醒</div>
+      <div v-if="!collapsed" class="logo">多线程管理器</div>
       <button class="icon-btn ghost" :title="collapsed ? '展开' : '收起'" @click="toggleCollapse">
         <span class="icon">{{ collapsed ? '»' : '«' }}</span>
       </button>

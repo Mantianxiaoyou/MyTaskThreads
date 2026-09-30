@@ -21,8 +21,8 @@ const titleMap = {
   '/settings': '设置'
 }
 const currentTitle = computed(() => {
-  if (props.mini) return '工作进度'
-  return titleMap[route.path] || '工作进度提醒'
+  if (props.mini) return '多线程管理器'
+  return titleMap[route.path] || '多线程管理器'
 })
 
 onMounted(async () => {
